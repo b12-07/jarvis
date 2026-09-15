@@ -1,0 +1,13 @@
+SpeechRecognition
+edge-tts
+pygame
+google-genai
+psutil
+PySide6
+pytest
+pyaudio
+python-dotenv
+numpy
+pytest-mock
+pycaw
+comtypes
