@@ -1,9 +1,28 @@
 import speech_recognition as sr
 import numpy as np
+import socket
+import urllib.error
 
 class SpeechToText:
     def __init__(self):
         self.recognizer = sr.Recognizer()
+
+    def transcribe_audio(self, sr_audio, language="tr-TR") -> str:
+        """Safely transcribes audio, catching all socket and network errors."""
+        try:
+            return self.recognizer.recognize_google(sr_audio, language=language)
+        except sr.UnknownValueError:
+            print("[STT] Google Speech Recognition could not understand audio.")
+            return ""
+        except sr.RequestError as e:
+            print(f"[STT] API request failed (Service unavailable/Network error): {e}")
+            return ""
+        except (OSError, socket.error, urllib.error.URLError) as e:
+            print(f"[STT] Network connection failed: {e}")
+            return ""
+        except Exception as e:
+            print(f"[STT] Unexpected error during transcription: {e}")
+            return ""
 
     def listen_and_transcribe(self, mic_index=None, amplitude_callback=None):
         """
@@ -23,15 +42,9 @@ class SpeechToText:
                 audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
 
                 print("Processing speech...")
-                text = self.recognizer.recognize_google(audio, language="tr-TR")
-                return text
+                return self.transcribe_audio(audio, language="tr-TR")
         except sr.WaitTimeoutError:
             return ""
-        except sr.UnknownValueError:
-            return ""
-        except sr.RequestError as e:
-            print(f"Could not request results from Google Speech Recognition service; {e}")
-            return ""
         except Exception as e:
-            print(f"STT Error: {e}")
+            print(f"[STT] Microphone Error: {e}")
             return ""

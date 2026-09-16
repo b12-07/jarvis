@@ -109,7 +109,7 @@ class MainWindow(QWidget):
             QWidget {
                 background-color: #050a0f;
                 color: #e0f2fe;
-                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
             }
         """)
         self.resize(450, 700)

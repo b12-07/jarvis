@@ -84,19 +84,10 @@ class AudioWorker(QThread):
         sr_audio = sr.AudioData(audio_data, RATE, 2) # sample_rate=16000, sample_width=2
 
         print("Transcribing...")
-        try:
-            text = self.stt.recognizer.recognize_google(sr_audio, language="tr-TR")
+        text = self.stt.transcribe_audio(sr_audio, language="tr-TR")
+        if text:
             print(f"Transcribed: {text}")
-            self.transcription_complete.emit(text)
-        except sr.UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-            self.transcription_complete.emit("")
-        except sr.RequestError as e:
-            print(f"Could not request results from Google Speech Recognition service; {e}")
-            self.transcription_complete.emit("")
-        except Exception as e:
-            print(f"STT Error: {e}")
-            self.transcription_complete.emit("")
+        self.transcription_complete.emit(text)
 
 class JarvisController(QObject):
     def __init__(self):
