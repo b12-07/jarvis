@@ -120,14 +120,7 @@ class JarvisController(QObject):
         self.speech_thread = None
 
     def start_listening(self):
-        # Stop any ongoing speech
-        import pygame
-        try:
-            if pygame.mixer.get_init():
-                pygame.mixer.music.stop()
-        except:
-            pass
-
+        # Optional: could implement a mechanism to stop ongoing subprocess audio here if needed.
         self.audio_worker = AudioWorker(self.stt)
         self.audio_worker.is_listening = True
         self.audio_worker.amplitude_update.connect(self.window.visualizer.set_amplitude)

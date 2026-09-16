@@ -1,6 +1,5 @@
 SpeechRecognition
 edge-tts
-pygame
 google-genai
 psutil
 PySide6

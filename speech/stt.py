@@ -1,5 +1,4 @@
 import speech_recognition as sr
-import audioop
 import numpy as np
 
 class SpeechToText:
