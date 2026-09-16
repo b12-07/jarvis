@@ -4,6 +4,7 @@ from google.genai import types
 from config import GEMINI_API_KEY, JARVIS_SYSTEM_PROMPT, MODEL_NAME
 from actions.system import SystemActions
 from actions.developer import execute_command, read_file, write_file
+from plugins import load_all_plugins
 from config import APP_ALIASES
 
 class JarvisBrain:
@@ -12,8 +13,8 @@ class JarvisBrain:
         self.chat = None
         self.client = None
 
-        # Gather all tools to expose to Gemini
-        self.tools = [
+        # Gather basic system and developer tools
+        base_tools = [
             self.system_actions.get_system_metrics,
             self.system_actions.launch_app,
             self.system_actions.adjust_volume,
@@ -21,6 +22,10 @@ class JarvisBrain:
             read_file,
             write_file
         ]
+
+        # Dynamically load all tools from the plugins directory
+        plugin_tools = load_all_plugins()
+        self.tools = base_tools + plugin_tools
 
         # Only initialize if we have an API key (allows testing without key)
         if GEMINI_API_KEY:
