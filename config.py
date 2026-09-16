@@ -14,7 +14,7 @@ APP_ALIASES = {
     "vscode": "Visual Studio Code"
 }
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3.6-flash"
 
 # The core prompt determining Jarvis's personality and boundaries
 JARVIS_SYSTEM_PROMPT = """
