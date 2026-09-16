@@ -14,7 +14,7 @@ class VisualizerWidget(QWidget):
         # Smooth animation timer
         self.anim_timer = QTimer(self)
         self.anim_timer.timeout.connect(self.update_visualizer)
-        self.anim_timer.start(30) # ~33fps
+        self.anim_timer.start(50) # ~20fps for performance optimization
         self.target_amplitude = 0.0
         self.is_listening = False
 
@@ -50,19 +50,25 @@ class VisualizerWidget(QWidget):
         center_y = height / 2
 
         # Base ring
-        base_radius = 50
+        base_radius = 60
         # Expand based on amplitude
-        current_radius = base_radius + (self.amplitude * 50)
+        current_radius = base_radius + (self.amplitude * 70)
 
-        # Color based on state
-        color = QColor(0, 255, 255) if self.is_listening else QColor(100, 100, 100)
+        # Color based on state (Neon Cyan vs Obsidian Grey)
+        color = QColor(0, 255, 255) if self.is_listening else QColor(40, 50, 60)
 
-        pen = QPen(color, 4)
+        # Inner Ring
+        pen = QPen(color, 2)
+        painter.setPen(pen)
+        painter.drawEllipse(center_x - base_radius, center_y - base_radius, base_radius * 2, base_radius * 2)
+
+        # Outer Reactive Ring
+        pen = QPen(color, 5)
         painter.setPen(pen)
 
         # Glow effect
         glow_color = QColor(color)
-        glow_color.setAlpha(50)
+        glow_color.setAlpha(60)
         painter.setBrush(QBrush(glow_color))
 
         painter.drawEllipse(center_x - current_radius, center_y - current_radius,
@@ -75,8 +81,8 @@ class MetricWidget(QWidget):
         self.cpu_label = QLabel("CPU: 0%")
         self.ram_label = QLabel("RAM: 0%")
 
-        self.cpu_label.setStyleSheet("color: #00ffff; font-family: monospace; font-size: 14px;")
-        self.ram_label.setStyleSheet("color: #00ffff; font-family: monospace; font-size: 14px;")
+        self.cpu_label.setStyleSheet("color: #00ffff; font-family: 'Courier New', monospace; font-size: 14px; background: rgba(0, 20, 30, 0.6); padding: 5px; border-radius: 4px; border: 1px solid #005577;")
+        self.ram_label.setStyleSheet("color: #00ffff; font-family: 'Courier New', monospace; font-size: 14px; background: rgba(0, 20, 30, 0.6); padding: 5px; border-radius: 4px; border: 1px solid #005577;")
 
         layout.addWidget(self.cpu_label)
         layout.addWidget(self.ram_label)
@@ -98,9 +104,15 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Jarvis AI")
-        self.setStyleSheet("background-color: #0a0a0a; color: white;")
-        self.resize(400, 600)
+        self.setWindowTitle("Jarvis Terminal")
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #050a0f;
+                color: #e0f2fe;
+                font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            }
+        """)
+        self.resize(450, 700)
 
         layout = QVBoxLayout(self)
 
@@ -116,26 +128,42 @@ class MainWindow(QWidget):
         layout.addWidget(self.visualizer, alignment=Qt.AlignCenter)
 
         # Status Label
-        self.status_label = QLabel("Idle")
+        self.status_label = QLabel("Bekliyor")
         self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("color: #888888; font-size: 16px; font-weight: bold;")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                color: #475569;
+                font-size: 18px;
+                font-weight: 800;
+                letter-spacing: 2px;
+                padding: 10px;
+                background: rgba(0, 255, 255, 0.05);
+                border-radius: 8px;
+                border: 1px solid rgba(0, 255, 255, 0.1);
+            }
+        """)
         layout.addWidget(self.status_label)
 
         # PTT Button
-        self.ptt_button = QPushButton("PUSH TO TALK (Spacebar)")
+        self.ptt_button = QPushButton("DİNLE (Boşluk Tuşu)")
         self.ptt_button.setStyleSheet("""
             QPushButton {
-                background-color: #1a1a1a;
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #082f49, stop:1 #0c4a6e);
                 border: 2px solid #00ffff;
-                border-radius: 10px;
-                color: #00ffff;
+                border-radius: 12px;
+                color: #22d3ee;
                 font-weight: bold;
-                padding: 15px;
+                letter-spacing: 1.5px;
+                padding: 18px;
                 font-size: 16px;
             }
             QPushButton:pressed {
                 background-color: #00ffff;
-                color: #000000;
+                color: #020617;
+                border: 2px solid #ffffff;
+            }
+            QPushButton:hover {
+                border: 2px solid #67e8f9;
             }
         """)
 
@@ -148,27 +176,53 @@ class MainWindow(QWidget):
     def on_ptt_pressed(self):
         if not self.is_pressing:
             self.is_pressing = True
-            self.status_label.setText("Listening...")
-            self.status_label.setStyleSheet("color: #00ffff; font-size: 16px; font-weight: bold;")
+            self.set_status("Dinliyor...")
             self.visualizer.set_listening_state(True)
             self.push_to_talk_started.emit()
 
     def on_ptt_released(self):
         if self.is_pressing:
             self.is_pressing = False
-            self.status_label.setText("Processing...")
-            self.status_label.setStyleSheet("color: #ffff00; font-size: 16px; font-weight: bold;")
+            self.set_status("İşleniyor...")
             self.visualizer.set_listening_state(False)
             self.push_to_talk_ended.emit()
 
     from PySide6.QtCore import Slot
     @Slot(str)
     def set_status(self, status: str):
-        self.status_label.setText(status)
-        if status == "Idle":
-            self.status_label.setStyleSheet("color: #888888; font-size: 16px; font-weight: bold;")
-        elif status == "Speaking":
-            self.status_label.setStyleSheet("color: #00ff00; font-size: 16px; font-weight: bold;")
+        self.status_label.setText(status.upper())
+        base_style = """
+            QLabel {
+                font-size: 18px;
+                font-weight: 800;
+                letter-spacing: 2px;
+                padding: 10px;
+                border-radius: 8px;
+        """
+        if status == "Bekliyor":
+            self.status_label.setStyleSheet(base_style + """
+                color: #475569;
+                background: rgba(0, 255, 255, 0.05);
+                border: 1px solid rgba(0, 255, 255, 0.1);
+            }""")
+        elif status == "Konuşuyor" or status == "Konuşuyor...":
+            self.status_label.setStyleSheet(base_style + """
+                color: #4ade80;
+                background: rgba(74, 222, 128, 0.1);
+                border: 1px solid rgba(74, 222, 128, 0.4);
+            }""")
+        elif status == "Dinliyor...":
+            self.status_label.setStyleSheet(base_style + """
+                color: #22d3ee;
+                background: rgba(34, 211, 238, 0.15);
+                border: 1px solid rgba(34, 211, 238, 0.6);
+            }""")
+        elif status == "İşleniyor..." or status == "Düşünüyor...":
+            self.status_label.setStyleSheet(base_style + """
+                color: #facc15;
+                background: rgba(250, 204, 21, 0.1);
+                border: 1px solid rgba(250, 204, 21, 0.4);
+            }""")
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():

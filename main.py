@@ -49,6 +49,8 @@ class AudioWorker(QThread):
 
         while self.is_listening:
             try:
+                # Use a small sleep to prevent 100% CPU spinning if read is non-blocking or returns too fast
+                # PyAudio stream.read is usually blocking, but this ensures safe yield
                 data = stream.read(CHUNK, exception_on_overflow=False)
                 frames.append(data)
 
@@ -59,6 +61,9 @@ class AudioWorker(QThread):
                     # Amplify visual effect
                     amplitude = min(amplitude * 10, 1.0)
                     self.amplitude_update.emit(float(amplitude))
+
+                # Sleep briefly to ensure macOS UI thread doesn't choke
+                time.sleep(0.01)
 
             except Exception as e:
                 print(f"Error reading stream: {e}")
@@ -80,7 +85,7 @@ class AudioWorker(QThread):
 
         print("Transcribing...")
         try:
-            text = self.stt.recognizer.recognize_google(sr_audio)
+            text = self.stt.recognizer.recognize_google(sr_audio, language="tr-TR")
             print(f"Transcribed: {text}")
             self.transcription_complete.emit(text)
         except sr.UnknownValueError:
@@ -136,10 +141,10 @@ class JarvisController(QObject):
 
     def handle_transcription(self, text: str):
         if not text:
-            self.window.set_status("Idle")
+            self.window.set_status("Bekliyor")
             return
 
-        self.window.set_status("Thinking...")
+        self.window.set_status("Düşünüyor...")
 
         # Process in brain (blocking, could be threaded, but keeps flow simple for now)
         threading.Thread(target=self._process_and_speak, args=(text,), daemon=True).start()
@@ -151,11 +156,11 @@ class JarvisController(QObject):
         # Update UI safely (should technically use signals for Qt thread safety, but simple string update often works)
         # We will use QMetaObject.invokeMethod to be thread-safe
         from PySide6.QtCore import QMetaObject, Qt, Q_ARG
-        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Speaking"))
+        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Konuşuyor"))
 
         self.tts.speak(response)
 
-        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Idle"))
+        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Bekliyor"))
 
     def run(self):
         self.window.show()
@@ -168,9 +173,9 @@ class JarvisController(QObject):
     def _initial_greeting(self):
         time.sleep(1)
         from PySide6.QtCore import QMetaObject, Qt, Q_ARG
-        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Speaking"))
-        self.tts.speak("Systems online, sir. Jarvis is ready.")
-        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Idle"))
+        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Konuşuyor"))
+        self.tts.speak("Sistem çevrimiçi, efendim. Jarvis hazır.")
+        QMetaObject.invokeMethod(self.window, "set_status", Qt.QueuedConnection, Q_ARG(str, "Bekliyor"))
 
 if __name__ == "__main__":
     controller = JarvisController()

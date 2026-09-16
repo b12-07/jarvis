@@ -14,7 +14,7 @@ class TextToSpeech:
             print(f"Failed to initialize pygame mixer (likely headless): {e}")
             self.mixer_initialized = False
 
-        self.voice = "en-GB-RyanNeural"  # Good voice for a British AI (Tony Stark style)
+        self.voice = "tr-TR-AhmetNeural"  # Turkish voice for Jarvis
 
     async def _generate_audio(self, text: str, output_file: str):
         communicate = edge_tts.Communicate(text, self.voice)

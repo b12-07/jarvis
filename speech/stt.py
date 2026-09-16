@@ -24,7 +24,7 @@ class SpeechToText:
                 audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
 
                 print("Processing speech...")
-                text = self.recognizer.recognize_google(audio)
+                text = self.recognizer.recognize_google(audio, language="tr-TR")
                 return text
         except sr.WaitTimeoutError:
             return ""
